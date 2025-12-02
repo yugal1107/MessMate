@@ -1,0 +1,48 @@
+# Exclude files and directories that shouldn't be in the Docker image
+
+# Target directory (build artifacts)
+
+target/
+!target/MessMate-0.0.1-SNAPSHOT.jar
+
+# IDE files
+
+.idea/
+.vscode/
+_.iml
+_.ipr
+\*.iws
+
+# Maven
+
+.mvn/wrapper/maven-wrapper.jar
+
+# Logs
+
+\*.log
+logs/
+
+# Git
+
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+
+\*.md
+GEMINI.md
+
+# OS files
+
+.DS_Store
+Thumbs.db
+
+# Test files
+
+src/test/
+
+# Environment files
+
+.env
+.env.local

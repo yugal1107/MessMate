@@ -80,14 +80,18 @@ public class UserService implements UserDetailsService {
         return modelMapper.map(user, UserDto.class);
     }
 
+    public UserListDto searchUsersByName(String name) {
+        List<UserDto> userDtoList = userRepository.findByNameContainingIgnoreCase(name)
+                .stream()
+                .map(user -> modelMapper.map(user, UserDto.class))
+                .toList();
+        return new UserListDto(userDtoList.size(), userDtoList);
+    }
+
     //non controller methods
     public User getUserById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
-    }
-
-    public void saveUser(User user){
-        userRepository.save(user);
     }
 
     public List<User> getSubscribedUsers(){
@@ -95,11 +99,11 @@ public class UserService implements UserDetailsService {
     }
 
     public List<User> getLunchOffUsers(){
-        return userRepository.findBySubscription_StatusAndMealOff_Lunch(SubscriptionStatus.ACTIVE,true);
+        return userRepository.findByMealOff_Lunch(true);
     }
 
     public List<User> getDinnerOffUsers() {
-        return userRepository.findBySubscription_StatusAndMealOff_Dinner(SubscriptionStatus.ACTIVE,true);
+        return userRepository.findByMealOff_Dinner(true);
     }
 
 }

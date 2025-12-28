@@ -2,14 +2,12 @@ package com.springboot.MessApplication.MessMate.services;
 
 import com.springboot.MessApplication.MessMate.dto.*;
 import com.springboot.MessApplication.MessMate.entities.MealOff;
-import com.springboot.MessApplication.MessMate.entities.Subscription;
 import com.springboot.MessApplication.MessMate.entities.User;
 import com.springboot.MessApplication.MessMate.entities.enums.Meal;
 import com.springboot.MessApplication.MessMate.entities.enums.NotificationType;
 import com.springboot.MessApplication.MessMate.entities.enums.SubscriptionStatus;
 import com.springboot.MessApplication.MessMate.exceptions.MealOffDeadlineException;
 import com.springboot.MessApplication.MessMate.exceptions.ResourceNotFoundException;
-import com.springboot.MessApplication.MessMate.exceptions.UserNotSubscribedException;
 import com.springboot.MessApplication.MessMate.repositories.MealOffRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -20,9 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +34,7 @@ public class MealOffService {
 
     public TodayMealOffDto setLunchOff() {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        subscriptionService.checkSubscriptionStatus(user);
+        subscriptionService.checkSubscriptionStatus(user.getId());
         MealOff mealOff = getMealOff(user.getId());
         if(mealOff.getLunch()){
             TodayMealOffDto todayMealOffDto = modelMapper.map(mealOff, TodayMealOffDto.class);
@@ -58,7 +54,7 @@ public class MealOffService {
     }
     public TodayMealOffDto cancelLunchOff() {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        subscriptionService.checkSubscriptionStatus(user);
+        subscriptionService.checkSubscriptionStatus(user.getId());
         MealOff mealOff = getMealOff(user.getId());
         if(!mealOff.getLunch()){
             TodayMealOffDto todayMealOffDto = modelMapper.map(mealOff, TodayMealOffDto.class);
@@ -77,7 +73,7 @@ public class MealOffService {
 
     public TodayMealOffDto setDinnerOff() {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        subscriptionService.checkSubscriptionStatus(user);
+        subscriptionService.checkSubscriptionStatus(user.getId());
         MealOff mealOff = getMealOff(user.getId());
         if(mealOff.getDinner()) {
             TodayMealOffDto todayMealOffDto = modelMapper.map(mealOff, TodayMealOffDto.class);
@@ -98,7 +94,7 @@ public class MealOffService {
 
     public TodayMealOffDto cancelDinnerOff() {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        subscriptionService.checkSubscriptionStatus(user);
+        subscriptionService.checkSubscriptionStatus(user.getId());
         MealOff mealOff = getMealOff(user.getId());
         if(!mealOff.getDinner()){
             TodayMealOffDto todayMealOffDto = modelMapper.map(mealOff, TodayMealOffDto.class);
@@ -117,7 +113,7 @@ public class MealOffService {
 
     public CustomMealOffDto setCustomMealOff(CustomMealOffDto mealOffDto) {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        subscriptionService.checkSubscriptionStatus(user);
+        subscriptionService.checkSubscriptionStatus(user.getId());
 
         MealOff mealOff = getMealOff(user.getId());
         if(mealOff.getCustomOff()){
@@ -155,7 +151,7 @@ public class MealOffService {
 
     public CustomMealOffDto cancelCustomMealOff() {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        subscriptionService.checkSubscriptionStatus(user);
+        subscriptionService.checkSubscriptionStatus(user.getId());
         MealOff mealOff = getMealOff(user.getId());
         //check if meal off exists or not
         if (!mealOff.getCustomOff() || mealOff.getStartDate() == null || mealOff.getEndDate() == null ||
@@ -180,38 +176,38 @@ public class MealOffService {
 
     public TodayMealOffDto getTodayMealOffDetails() {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        subscriptionService.checkSubscriptionStatus(user);
+        subscriptionService.checkSubscriptionStatus(user.getId());
         MealOff mealOff = getMealOff(user.getId());
         return modelMapper.map(mealOff, TodayMealOffDto.class);
     }
 
     public CustomMealOffDto getCustomMealOffDetails() {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        subscriptionService.checkSubscriptionStatus(user);
+        subscriptionService.checkSubscriptionStatus(user.getId());
         MealOff mealOff = getMealOff(user.getId());
         return modelMapper.map(mealOff, CustomMealOffDto.class);
     }
 
     public UserListDto getAllLunchOffs() {
         List<User> lunchOffUsers = userService.getLunchOffUsers();
-        List<UserDto> lunchOffUserDtos = lunchOffUsers
+        List<UserDto> lunchOffUserDtoList = lunchOffUsers
                 .stream()
                 .map(
                 user -> modelMapper.map(user,UserDto.class)
                 )
                 .toList();
-        return new UserListDto(lunchOffUserDtos.size(), lunchOffUserDtos);
+        return new UserListDto(lunchOffUserDtoList.size(), lunchOffUserDtoList);
     }
 
     public UserListDto getAllDinnerOffs() {
         List<User> dinnerOffUsers = userService.getDinnerOffUsers();
-        List<UserDto> dinnerOffUserDtos = dinnerOffUsers
+        List<UserDto> dinnerOffUserDtoList = dinnerOffUsers
                 .stream()
                 .map(
                         user -> modelMapper.map(user,UserDto.class)
                 )
                 .toList();
-        return new UserListDto(dinnerOffUserDtos.size(), dinnerOffUserDtos);
+        return new UserListDto(dinnerOffUserDtoList.size(), dinnerOffUserDtoList);
     }
 
     public List<CustomOffDetailDto> getAllCustomOffs() {
@@ -226,6 +222,35 @@ public class MealOffService {
                     return customOffDetail;
                 })
                 .toList();
+    }
+
+    public CustomMealOffDto getCustomOffDetailsByUserId(Long userId) {
+        subscriptionService.checkSubscriptionStatus(userId);
+        MealOff mealOff = getMealOff(userId);
+        return modelMapper.map(mealOff, CustomMealOffDto.class);
+    }
+
+    public CustomMealOffDto cancelCustomOffByUserId(Long userId) {
+        subscriptionService.checkSubscriptionStatus(userId);
+        MealOff mealOff = getMealOff(userId);
+        //check if meal off exists or not
+        if (!mealOff.getCustomOff() || mealOff.getStartDate() == null || mealOff.getEndDate() == null ||
+                mealOff.getStartMeal() == null || mealOff.getEndMeal() == null){
+            throw new ResourceNotFoundException("No existing meal off found");
+        }else {
+            mealOff.setCustomOff(false);
+            mealOff.setStartMeal(null);
+            mealOff.setEndMeal(null);
+            mealOff.setStartDate(null);
+            mealOff.setEndDate(null);
+
+            //save mealOff
+            MealOff savedMealOff = mealOffRepository.save(mealOff);
+
+            //creating notification
+            notificationService.createNotification(userId, NotificationType.MEAL_UPDATE, "your custom meal off has been cancelled by Admin");
+            return modelMapper.map(savedMealOff, CustomMealOffDto.class);
+        }
     }
 
     // non-controller methods
@@ -243,14 +268,45 @@ public class MealOffService {
         return mealOffRepository.findAllByCustomOff(true);
     }
 
-    public void cancelCustomMealOffIfExists(MealOff mealOff) {
-        if(mealOff.getCustomOff()){
-            mealOff.setCustomOff(false);
-            mealOff.setStartMeal(null);
-            mealOff.setEndMeal(null);
-            mealOff.setStartDate(null);
-            mealOff.setEndDate(null);
-            mealOffRepository.save(mealOff);
-        }
+    public void resetMealOff(Long userId) {
+        MealOff mealOff = getMealOff(userId);
+        mealOff.setLunch(false);
+        mealOff.setDinner(false);
+        mealOff.setCustomOff(false);
+        mealOff.setStartMeal(null);
+        mealOff.setEndMeal(null);
+        mealOff.setStartDate(null);
+        mealOff.setEndDate(null);
+        mealOffRepository.save(mealOff);
     }
+
+
+    public void resetLunchOffs(){
+        List<MealOff> lunchOffs = mealOffRepository.findAllByLunchAndUser_Subscription_Status(true,SubscriptionStatus.ACTIVE);
+        for(MealOff mealOff : lunchOffs){
+            User user = mealOff.getUser();
+
+            //creating notification
+            notificationService.createNotification(
+                    user.getId(), NotificationType.MEAL_UPDATE, "Lunch set off successfully for " + LocalDate.now()
+            );
+            mealOff.setLunch(false);
+        }
+        mealOffRepository.saveAll(lunchOffs);
+    }
+
+    public void resetDinnerOffs(){
+        List<MealOff> dinnerOffs = mealOffRepository.findAllByDinnerAndUser_Subscription_Status(true,SubscriptionStatus.ACTIVE);
+        for(MealOff mealOff : dinnerOffs){
+            User user = mealOff.getUser();
+
+            //creating notification
+            notificationService.createNotification(
+                    user.getId(), NotificationType.MEAL_UPDATE, "Dinner set off successfully for " + LocalDate.now()
+            );
+            mealOff.setDinner(false);
+        }
+        mealOffRepository.saveAll(dinnerOffs);
+    }
+
 }

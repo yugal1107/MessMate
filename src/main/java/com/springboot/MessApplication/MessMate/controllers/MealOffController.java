@@ -78,4 +78,16 @@ public class MealOffController {
         return ResponseEntity.ok(mealOffService.getAllCustomOffs());
     }
 
+    //get custom meal off details by userId (for admin)
+    @GetMapping("/custom/{userId}")
+    public ResponseEntity<CustomMealOffDto> getCustomOffDetailsByUserId(@PathVariable Long userId){
+        return ResponseEntity.ok(mealOffService.getCustomOffDetailsByUserId(userId));
+    }
+
+    //cancel custom off by userId (for admin)
+    @DeleteMapping("/custom/{userId}")
+    public ResponseEntity<CustomMealOffDto> cancelCustomOffByUserId(@PathVariable Long userId){
+        return ResponseEntity.ok(mealOffService.cancelCustomOffByUserId(userId));
+    }
+
 }

@@ -15,4 +15,8 @@ public interface SubscriptionRepository extends JpaRepository<Subscription,Long>
     Subscription findByUser(User user);
 
     Optional<Subscription> findByUser_Id(long userId);
+
+    List<Subscription> findAllByStatusAndUser_MealOff_Lunch(SubscriptionStatus subscriptionStatus, Boolean lunch);
+
+    List<Subscription> findAllByStatusAndUser_MealOff_Dinner(SubscriptionStatus subscriptionStatus, Boolean dinner);
 }

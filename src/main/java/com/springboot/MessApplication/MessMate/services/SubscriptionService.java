@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -78,8 +79,11 @@ public class SubscriptionService {
     public Subscription saveSubscription(Subscription subscription) {
         return subscriptionRepository.save(subscription);
     }
-    public void checkSubscriptionStatus(User user) {
-        Subscription subscription = getSubscriptionByUserId(user.getId());
+    public void checkSubscriptionStatus(Long userId) {
+        Subscription subscription = getSubscriptionByUserId(userId);
+        if (subscription==null){
+            throw new ResourceNotFoundException("User with Id " + userId + " does not exist");
+        }
         if(Set.of(SubscriptionStatus.INACTIVE,SubscriptionStatus.REQUESTED).contains(subscription.getStatus()) ){
             throw new UserNotSubscribedException("User not subscribed");
         }
@@ -92,4 +96,11 @@ public class SubscriptionService {
         }
     }
 
+    public List<Subscription> getLunchCountableActiveSubscriptions(){
+        return subscriptionRepository.findAllByStatusAndUser_MealOff_Lunch(SubscriptionStatus.ACTIVE,false);
+    }
+
+    public List<Subscription> getDinnerCountableActiveSubscriptions(){
+        return subscriptionRepository.findAllByStatusAndUser_MealOff_Dinner(SubscriptionStatus.ACTIVE,false);
+    }
 }

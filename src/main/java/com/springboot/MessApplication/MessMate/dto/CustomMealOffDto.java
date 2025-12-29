@@ -8,6 +8,8 @@ import java.time.LocalDate;
 @Data
 public class CustomMealOffDto {
 
+    private Boolean customOff;
+
     private Meal startMeal;
     private Meal endMeal;
 

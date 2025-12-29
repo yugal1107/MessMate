@@ -21,6 +21,8 @@ public class Subscription {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    //For non owning side in one to one mapping, the default fetch type (eager) can be changed,
+    //but it is not  honored by hibernate
     @OneToOne(mappedBy ="subscription", cascade = CascadeType.ALL)
     private User user;
 

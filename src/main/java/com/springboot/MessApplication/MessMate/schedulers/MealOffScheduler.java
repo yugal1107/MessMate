@@ -21,9 +21,8 @@ public class MealOffScheduler {
 
     @Scheduled(cron = "0 1 8 * * *",zone = "Asia/Kolkata")
     void setLunchOff(){
-        userService.getSubscribedUsers().forEach(user -> {
+        mealOffService.getCustomMealOffs().forEach(mealOff -> {
             LocalDate today = LocalDate.now();
-            MealOff mealOff = mealOffService.getMealOff(user);
 
             // Skip if any field is null
             if (mealOff.getStartDate() == null || mealOff.getEndDate() == null ||
@@ -36,6 +35,7 @@ public class MealOffScheduler {
                 mealOff.setLunch(true);
                 mealOffService.saveMealOff(mealOff);
             }else if(today.isAfter(mealOff.getEndDate())){
+                mealOff.setCustomOff(false);
                 mealOff.setStartMeal(null);
                 mealOff.setEndMeal(null);
                 mealOff.setStartDate(null);
@@ -47,9 +47,8 @@ public class MealOffScheduler {
 
     @Scheduled(cron = "0 1 16 * * *",zone = "Asia/Kolkata")
     void setDinnerOff(){
-        userService.getSubscribedUsers().forEach(user -> {
+        mealOffService.getCustomMealOffs().forEach(mealOff -> {
             LocalDate today = LocalDate.now();
-            MealOff mealOff = mealOffService.getMealOff(user);
 
             // Skip if any field is null
             if (mealOff.getStartDate() == null || mealOff.getEndDate() == null ||
@@ -62,6 +61,7 @@ public class MealOffScheduler {
                 mealOff.setDinner(true);
                 mealOffService.saveMealOff(mealOff);
             }else if(today.equals(mealOff.getEndDate())){
+                mealOff.setCustomOff(false);
                 mealOff.setStartMeal(null);
                 mealOff.setEndMeal(null);
                 mealOff.setStartDate(null);

@@ -1,12 +1,14 @@
 package com.springboot.MessApplication.MessMate.services;
 
 import com.springboot.MessApplication.MessMate.dto.SubscriptionDto;
+import com.springboot.MessApplication.MessMate.entities.MealOff;
 import com.springboot.MessApplication.MessMate.entities.Subscription;
 import com.springboot.MessApplication.MessMate.entities.User;
 import com.springboot.MessApplication.MessMate.entities.enums.NotificationType;
 import com.springboot.MessApplication.MessMate.entities.enums.SubscriptionStatus;
 import com.springboot.MessApplication.MessMate.entities.enums.SubscriptionType;
 import com.springboot.MessApplication.MessMate.exceptions.ResourceNotFoundException;
+import com.springboot.MessApplication.MessMate.exceptions.UserNotSubscribedException;
 import com.springboot.MessApplication.MessMate.repositories.SubscriptionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +19,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -60,18 +64,10 @@ public class SubscriptionService {
     }
 
     public SubscriptionDto getSubscriptionDetailsByUserId(long userId) {
-        Subscription subscription = subscriptionRepository.findByUser_Id(userId)
-                .orElseThrow(() ->new ResourceNotFoundException("User with Id " + userId + " doesnot exist"));
+        Subscription subscription = getSubscriptionByUserId(userId);
         return modelMapper.map(subscription, SubscriptionDto.class);
     }
 
-    public SubscriptionDto updateSubscriptionByUserId(long userId, SubscriptionDto subscriptionDto) {
-        Subscription subscription = getSubscriptionByUserId(userId);
-        subscription.setMeals(subscriptionDto.getMeals());
-        notificationService.createNotification(userId,NotificationType.MEAL_UPDATE,"Your meal count has been updated to "+ subscriptionDto.getMeals()+" by admin");
-        updateStatusIfMealsExhausted(userId,subscription);
-        return modelMapper.map(subscriptionRepository.save(subscription),SubscriptionDto.class);
-    }
 
     //non-controller methods
 
@@ -80,18 +76,31 @@ public class SubscriptionService {
                 .orElseThrow(() ->new ResourceNotFoundException("User with Id " + userId + " doesnot exist"));
     }
 
-    public void saveSubscription(Subscription subscription) {
-        subscriptionRepository.save(subscription);
+    public Subscription saveSubscription(Subscription subscription) {
+        return subscriptionRepository.save(subscription);
     }
-
-
-    public void updateStatusIfMealsExhausted(long userId,Subscription subscription) {
-        if(subscription.getMeals() == 0){
-            subscription.setStatus(SubscriptionStatus.INACTIVE);
-            subscription.setDate(LocalDateTime.now());
-            notificationService.createNotification(userId, NotificationType.SUBSCRIPTION_EXPIRY, "Your Subscription has expired");
+    public void checkSubscriptionStatus(Long userId) {
+        Subscription subscription = getSubscriptionByUserId(userId);
+        if (subscription==null){
+            throw new ResourceNotFoundException("User with Id " + userId + " does not exist");
+        }
+        if(Set.of(SubscriptionStatus.INACTIVE,SubscriptionStatus.REQUESTED).contains(subscription.getStatus()) ){
+            throw new UserNotSubscribedException("User not subscribed");
         }
     }
 
+    public  void updateStatusIfMealsExhausted(Subscription subscription) {
+        if (subscription.getMeals() == 0) {
+            subscription.setStatus(SubscriptionStatus.INACTIVE);
+            subscription.setDate(LocalDateTime.now());
+        }
+    }
 
+    public List<Subscription> getLunchCountableActiveSubscriptions(){
+        return subscriptionRepository.findAllByStatusAndUser_MealOff_Lunch(SubscriptionStatus.ACTIVE,false);
+    }
+
+    public List<Subscription> getDinnerCountableActiveSubscriptions(){
+        return subscriptionRepository.findAllByStatusAndUser_MealOff_Dinner(SubscriptionStatus.ACTIVE,false);
+    }
 }

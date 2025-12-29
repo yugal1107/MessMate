@@ -33,6 +33,6 @@ public class Notification {
     @CreationTimestamp
     private LocalDateTime timestamp;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY) //fetch type is eager by default in many to one
     private User user;
 }

@@ -18,6 +18,7 @@ public class MealOff {
 
     private Boolean lunch = false;
     private Boolean dinner = false;
+    private Boolean customOff = false;
 
     @Enumerated(EnumType.STRING)
     private Meal startMeal;
@@ -29,6 +30,8 @@ public class MealOff {
     private LocalDate startDate;
     private LocalDate endDate;
 
+    //For non owning side in one to one mapping, the default fetch type (eager) can be changed,
+    //but it is not  honored by hibernate
     @OneToOne(mappedBy = "mealOff", cascade = CascadeType.ALL)
     private User user;
 

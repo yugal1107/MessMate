@@ -12,7 +12,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     List<User> findBySubscription_Status(SubscriptionStatus status);
 
-    List<User> findBySubscription_StatusAndMealOff_Lunch(SubscriptionStatus subscriptionStatus, Boolean mealOffLunch);
+    List<User> findByMealOff_Lunch(Boolean mealOffLunch);
 
-    List<User> findBySubscription_StatusAndMealOff_Dinner(SubscriptionStatus subscriptionStatus, Boolean mealOffDinner);
+    List<User> findByMealOff_Dinner(Boolean mealOffDinner);
+
+    List<User> findByNameContainingIgnoreCase(String name);
+
 }

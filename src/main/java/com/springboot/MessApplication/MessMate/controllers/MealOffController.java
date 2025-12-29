@@ -1,9 +1,6 @@
 package com.springboot.MessApplication.MessMate.controllers;
 
-import com.springboot.MessApplication.MessMate.dto.CustomMealOffDto;
-import com.springboot.MessApplication.MessMate.dto.TodayMealOffDto;
-import com.springboot.MessApplication.MessMate.dto.UserDto;
-import com.springboot.MessApplication.MessMate.dto.UserListDto;
+import com.springboot.MessApplication.MessMate.dto.*;
 import com.springboot.MessApplication.MessMate.services.MealOffService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -73,6 +70,24 @@ public class MealOffController {
     @GetMapping("/dinner_offs")
     public ResponseEntity<UserListDto> getAllDinnerOffs(){
         return ResponseEntity.ok(mealOffService.getAllDinnerOffs());
+    }
+
+    //get all custom meal off (for admin)
+    @GetMapping("/custom_offs")
+    public ResponseEntity<List<CustomOffDetailDto>> getAllCustomOffDetails(){
+        return ResponseEntity.ok(mealOffService.getAllCustomOffs());
+    }
+
+    //get custom meal off details by userId (for admin)
+    @GetMapping("/custom/{userId}")
+    public ResponseEntity<CustomMealOffDto> getCustomOffDetailsByUserId(@PathVariable Long userId){
+        return ResponseEntity.ok(mealOffService.getCustomOffDetailsByUserId(userId));
+    }
+
+    //cancel custom off by userId (for admin)
+    @DeleteMapping("/custom/{userId}")
+    public ResponseEntity<CustomMealOffDto> cancelCustomOffByUserId(@PathVariable Long userId){
+        return ResponseEntity.ok(mealOffService.cancelCustomOffByUserId(userId));
     }
 
 }

@@ -2,14 +2,12 @@ package com.springboot.MessApplication.MessMate.controllers;
 
 
 import com.springboot.MessApplication.MessMate.dto.SubscriptionDto;
-import com.springboot.MessApplication.MessMate.dto.UserDto;
 import com.springboot.MessApplication.MessMate.entities.enums.SubscriptionType;
+import com.springboot.MessApplication.MessMate.services.SubscriptionMealOffCoordinatorService;
 import com.springboot.MessApplication.MessMate.services.SubscriptionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/subscription")
@@ -17,6 +15,7 @@ import java.util.List;
 public class SubscriptionController {
 
     private final SubscriptionService subscriptionService;
+    private final SubscriptionMealOffCoordinatorService subscriptionMealOffCoordinatorService;
 
     @GetMapping
     public ResponseEntity<SubscriptionDto> getSubscriptionDetails() {
@@ -42,7 +41,7 @@ public class SubscriptionController {
 
     @PutMapping("/{userId}")
     public ResponseEntity<SubscriptionDto> updateSubscriptionByUserId(@PathVariable long userId,@RequestBody SubscriptionDto subscriptionDto){
-        return ResponseEntity.ok(subscriptionService.updateSubscriptionByUserId(userId,subscriptionDto));
+        return ResponseEntity.ok(subscriptionMealOffCoordinatorService.updateSubscriptionByUserId(userId,subscriptionDto));
     }
 
 }

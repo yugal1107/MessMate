@@ -35,8 +35,8 @@ WORKDIR /app
 # Copy the JAR file from the build stage
 COPY --from=build /app/target/MessMate-0.0.1-SNAPSHOT.jar app.jar
 
-# Copy Firebase service account file
-COPY --from=build /app/src/main/resources/firebase/service-account.json /app/firebase/service-account.json
+# Copy Firebase service account file (commented out until private credentials are provided)
+# COPY --from=build /app/src/main/resources/firebase/service-account.json /app/firebase/service-account.json
 
 # # Change ownership to the non-root user
 # RUN chown -R spring:spring /app
@@ -47,12 +47,12 @@ COPY --from=build /app/src/main/resources/firebase/service-account.json /app/fir
 # Expose the application port
 EXPOSE 8080
 
-# Set JVM options for optimal performance in containers
-ENV JAVA_OPTS="-Xmx512m -Xms256m"
+# Set JVM options for optimal performance in low-memory containers (Render 512MB limit)
+ENV JAVA_OPTS="-Xmx300m -Xms128m -XX:+UseSerialGC"
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost:8080/actuator/health || exit 1
+  CMD wget --quiet --tries=1 --spider http://localhost:${PORT:-8080}/v3/api-docs || exit 1
 
 # Run the application
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

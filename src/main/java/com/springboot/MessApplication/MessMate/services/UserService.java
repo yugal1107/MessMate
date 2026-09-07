@@ -121,4 +121,12 @@ public class UserService implements UserDetailsService {
         return userRepository.findByMealOff_Dinner(true);
     }
 
+    public List<User> getStudents() {
+        return userRepository.findByRole(Role.STUDENT);
+    }
+
+    public List<User> getActiveSubscribedStudents() {
+        return userRepository.findByRoleAndSubscription_Status(Role.STUDENT, SubscriptionStatus.ACTIVE);
+    }
+
 }

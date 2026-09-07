@@ -1,6 +1,7 @@
 package com.springboot.MessApplication.MessMate.repositories;
 
 import com.springboot.MessApplication.MessMate.entities.User;
+import com.springboot.MessApplication.MessMate.entities.enums.Role;
 import com.springboot.MessApplication.MessMate.entities.enums.SubscriptionStatus;
 import com.springboot.MessApplication.MessMate.entities.enums.SubscriptionType;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -20,4 +21,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByNameContainingIgnoreCase(String name);
 
     List<User> findBySubscription_statusAndSubscription_type(SubscriptionStatus status, SubscriptionType type);
+
+    List<User> findByRole(Role role);
+
+    List<User> findByRoleAndSubscription_Status(Role role, SubscriptionStatus status);
 }

@@ -156,4 +156,46 @@ class NotificationServiceTest {
         assertEquals("Announcement sent successfully to 0 user(s)", response.getMessage());
         verify(notificationRepository, never()).saveAll(any());
     }
+
+    @Test
+    @DisplayName("Should dispatch notification to all admin users")
+    void shouldDispatchNotificationToAllAdminUsers() {
+        User admin1 = User.builder().id(1L).name("Admin One").role(Role.ADMIN).build();
+        User admin2 = User.builder().id(2L).name("Admin Two").role(Role.ADMIN).build();
+
+        when(userService.getAdmins()).thenReturn(List.of(admin1, admin2));
+
+        notificationService.notifyAllAdmins(
+                NotificationType.MEAL_OFF,
+                "Lunch off for John Doe (ID: 5) was cancelled by admin"
+        );
+
+        ArgumentCaptor<List<Notification>> captor = ArgumentCaptor.forClass(List.class);
+        verify(notificationRepository).saveAll(captor.capture());
+
+        List<Notification> saved = captor.getValue();
+        assertEquals(2, saved.size());
+
+        assertEquals(admin1, saved.get(0).getUser());
+        assertEquals(NotificationType.MEAL_OFF, saved.get(0).getType());
+        assertEquals("Lunch off for John Doe (ID: 5) was cancelled by admin", saved.get(0).getMessage());
+
+        assertEquals(admin2, saved.get(1).getUser());
+        assertEquals(NotificationType.MEAL_OFF, saved.get(1).getType());
+        assertEquals("Lunch off for John Doe (ID: 5) was cancelled by admin", saved.get(1).getMessage());
+    }
+
+    @Test
+    @DisplayName("Should do nothing and not call saveAll when no admins exist")
+    void shouldNotSaveNotificationsWhenNoAdminsExist() {
+        when(userService.getAdmins()).thenReturn(List.of());
+
+        notificationService.notifyAllAdmins(
+                NotificationType.MEAL_OFF,
+                "Dinner off for Jane (ID: 6) was cancelled by admin"
+        );
+
+        verify(notificationRepository, never()).saveAll(any());
+    }
 }
+

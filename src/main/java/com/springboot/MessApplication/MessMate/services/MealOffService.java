@@ -221,7 +221,12 @@ public class MealOffService {
         //for user
         notificationService.createNotification(userId,NotificationType.MEAL_OFF,"Your lunch off has been cancelled via admin");
 
-        //TODO notification for admin
+        //notification for admin
+        String studentName = mealOff.getUser() != null ? mealOff.getUser().getName() : "User";
+        notificationService.notifyAllAdmins(
+                NotificationType.MEAL_OFF,
+                "Lunch off for " + studentName + " (ID: " + userId + ") was cancelled by admin"
+        );
 
         return modelMapper.map(savedMealOff, TodayMealOffDto.class);
     }
@@ -243,7 +248,12 @@ public class MealOffService {
         //for user
         notificationService.createNotification(userId,NotificationType.MEAL_OFF,"Your Dinner off has been cancelled via admin");
 
-        //TODO notification for admin
+        //notification for admin
+        String studentName = mealOff.getUser() != null ? mealOff.getUser().getName() : "User";
+        notificationService.notifyAllAdmins(
+                NotificationType.MEAL_OFF,
+                "Dinner off for " + studentName + " (ID: " + userId + ") was cancelled by admin"
+        );
 
         return modelMapper.map(savedMealOff, TodayMealOffDto.class);
     }
@@ -254,8 +264,6 @@ public class MealOffService {
                 .map(mealOff -> {
                     CustomOffDetailDto customOffDetail = new CustomOffDetailDto();
                     customOffDetail.setCustomMealOff(modelMapper.map(mealOff, CustomMealOffDto.class));
-                    //since fetch type is eager for User in MealOff, we can directly get user from mealOff object
-                    //we do not need to make the database call
                     customOffDetail.setUser(modelMapper.map(mealOff.getUser(), UserDto.class));
                     return customOffDetail;
                 })
@@ -287,6 +295,14 @@ public class MealOffService {
 
             //creating notification
             notificationService.createNotification(userId, NotificationType.MEAL_OFF, "your custom meal off has been cancelled by Admin");
+
+            //notification for admin
+            String studentName = mealOff.getUser() != null ? mealOff.getUser().getName() : "User";
+            notificationService.notifyAllAdmins(
+                    NotificationType.MEAL_OFF,
+                    "Custom meal off for " + studentName + " (ID: " + userId + ") was cancelled by admin"
+            );
+
             return modelMapper.map(savedMealOff, CustomMealOffDto.class);
         }
     }

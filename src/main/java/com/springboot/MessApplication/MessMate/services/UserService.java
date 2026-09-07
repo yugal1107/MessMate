@@ -227,4 +227,9 @@ public class UserService implements UserDetailsService {
         return userRepository.findByRoleAndSubscription_Status(Role.STUDENT, SubscriptionStatus.ACTIVE);
     }
 
+    public List<User> getAdmins() {
+        return userRepository.findByRole(Role.ADMIN);
+    }
+
 }
+

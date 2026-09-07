@@ -100,4 +100,24 @@ public class NotificationService {
 
         return new SuccessResponseDto("Announcement sent successfully to " + recipients.size() + " user(s)");
     }
+
+    @Transactional
+    public void notifyAllAdmins(NotificationType type, String message) {
+        List<User> admins = userService.getAdmins();
+        if (admins == null || admins.isEmpty()) {
+            return;
+        }
+
+        List<Notification> notifications = admins.stream()
+                .map(admin -> Notification.builder()
+                        .user(admin)
+                        .type(type)
+                        .message(message)
+                        .isRead(false)
+                        .build())
+                .toList();
+
+        notificationRepository.saveAll(notifications);
+    }
 }
+

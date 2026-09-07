@@ -1,5 +1,8 @@
 package com.springboot.MessApplication.MessMate.controllers;
 
+import com.springboot.MessApplication.MessMate.dto.ChangePasswordRequestDto;
+import com.springboot.MessApplication.MessMate.dto.SuccessResponseDto;
+import com.springboot.MessApplication.MessMate.dto.UpdateProfileDto;
 import com.springboot.MessApplication.MessMate.dto.UserDto;
 import com.springboot.MessApplication.MessMate.dto.UserListDto;
 import com.springboot.MessApplication.MessMate.entities.enums.SubscriptionStatus;
@@ -22,7 +25,24 @@ public class UserController {
         return ResponseEntity.ok(userService.getMyProfile());
     }
 
-    //TODO updateProfile (all)
+    @PutMapping
+    public ResponseEntity<UserDto> updateMyProfile(@RequestBody UpdateProfileDto dto) {
+        return ResponseEntity.ok(userService.updateMyProfile(dto));
+    }
+
+    @Secured("ROLE_ADMIN")
+    @PutMapping("/{id}")
+    public ResponseEntity<UserDto> updateUserProfileById(
+            @PathVariable Long id,
+            @RequestBody UpdateProfileDto dto
+    ) {
+        return ResponseEntity.ok(userService.updateUserProfileById(id, dto));
+    }
+
+    @PutMapping("/change-password")
+    public ResponseEntity<SuccessResponseDto> changePassword(@RequestBody ChangePasswordRequestDto dto) {
+        return ResponseEntity.ok(userService.changePassword(dto));
+    }
 
     @Secured("ROLE_ADMIN")
     @GetMapping("/all")

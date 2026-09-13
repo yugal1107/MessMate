@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: messmate-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: mess-mate
+      POSTGRES_USER: ${DB_DEV_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_DEV_PASSWORD:-postgres}
+    ports:
+      - "5433:5432"
+    volumes:
+      - messmate-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_DEV_USERNAME:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: messmate-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    env_file: .env
+    environment:
+      # Testing on the home server against the local Postgres container above,
+      # not Supabase. Override the dev datasource URL to use the compose
+      # network's service name instead of the host-only "localhost:5433".
+      SPRING_PROFILES_ACTIVE: dev
+      DB_DEV_URL: jdbc:postgresql://postgres:5432/mess-mate?useSSL=false
+
+volumes:
+  messmate-postgres-data:

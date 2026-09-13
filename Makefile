@@ -7,6 +7,18 @@ TAG ?= latest
 # Default goal when running just 'make'
 .DEFAULT_GOAL := help
 
+# Auto-detect a JDK 21 install on this machine so builds work the same way
+# regardless of what `java` on PATH points to. See scripts/find-java21.sh.
+JAVA21_HOME := $(shell ./scripts/find-java21.sh)
+
+# Fails fast with a clear message if no JDK 21 was found on this machine.
+define require_java21
+	@if [ -z "$(JAVA21_HOME)" ]; then \
+		echo "No JDK 21 found on this machine. Install one (e.g. Temurin 21) and re-run." >&2; \
+		exit 1; \
+	fi
+endef
+
 # Help command to list available targets
 help:
 	@echo "Available commands:"
@@ -19,30 +31,40 @@ help:
 	@echo "  make docker-build - Build Docker image (optional: make docker-build TAG=v4)"
 	@echo "  make docker-run   - Run Docker container in background (optional: make docker-run TAG=v4)"
 	@echo "  make docker-stop  - Stop and remove the running Docker container"
+	@echo "  make db-up        - Start local Postgres container (for dev)"
+	@echo "  make db-down      - Stop local Postgres container (data is kept)"
+	@echo "  make db-logs      - Tail local Postgres container logs"
+	@echo "  make db-restore-from-prod - Copy current Supabase data into local Postgres"
 
 # Run in production mode
 run:
-	@export $$(grep -v '^#' .env | xargs) && ./mvnw spring-boot:run -Dspring-boot.run.profiles=prod
+	$(require_java21)
+	@export $$(grep -v '^#' .env | xargs) && JAVA_HOME=$(JAVA21_HOME) ./mvnw spring-boot:run -Dspring-boot.run.profiles=prod
 
 # Run in development mode
 dev:
-	@export $$(grep -v '^#' .env | xargs) && ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+	$(require_java21)
+	@export $$(grep -v '^#' .env | xargs) && JAVA_HOME=$(JAVA21_HOME) ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 
 # Build the project
 build:
-	./mvnw clean package -DskipTests
+	$(require_java21)
+	JAVA_HOME=$(JAVA21_HOME) ./mvnw clean package -DskipTests
 
 # Run the built JAR file directly
 start:
-	@export $$(grep -v '^#' .env | xargs) && java -jar target/MessMate-0.0.1-SNAPSHOT.jar
+	$(require_java21)
+	@export $$(grep -v '^#' .env | xargs) && $(JAVA21_HOME)/bin/java -jar target/MessMate-0.0.1-SNAPSHOT.jar
 
 # Clean the project
 clean:
-	./mvnw clean
+	$(require_java21)
+	JAVA_HOME=$(JAVA21_HOME) ./mvnw clean
 
 # Run tests
 test:
-	./mvnw test
+	$(require_java21)
+	JAVA_HOME=$(JAVA21_HOME) ./mvnw test
 
 # Build Docker image
 docker-build:
@@ -62,3 +84,20 @@ docker-run:
 		--env-file .env \
 		-e SPRING_PROFILES_ACTIVE=prod \
 		$(IMAGE_NAME):$(TAG)
+
+# Start local Postgres container for dev (matches DB_DEV_URL in .env)
+db-up:
+	docker compose up -d postgres
+
+# Stop local Postgres container (named volume keeps the data)
+db-down:
+	docker compose stop postgres
+
+# Tail local Postgres container logs
+db-logs:
+	docker compose logs -f postgres
+
+# Copy current Supabase (prod) data into the local Postgres container.
+# Run after `docker compose up -d --build`. Requires DB_PROD_URL in .env.
+db-restore-from-prod:
+	./scripts/restore-from-prod.sh

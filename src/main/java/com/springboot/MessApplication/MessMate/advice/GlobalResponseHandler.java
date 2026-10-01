@@ -20,7 +20,7 @@ public class GlobalResponseHandler implements ResponseBodyAdvice<Object> {
 
     @Override
     public Object beforeBodyWrite(Object body, MethodParameter returnType, MediaType selectedContentType, Class<? extends HttpMessageConverter<?>> selectedConverterType, ServerHttpRequest request, ServerHttpResponse response) {
-        List<String> allowedRoutes = List.of("/actuator","/v3/api-docs", "/swagger-ui/**", "/swagger-ui.html");
+        List<String> allowedRoutes = List.of("/actuator", "/v3/api-docs", "/swagger-ui/**", "/swagger-ui.html", "/auth/verify-email");
 
         boolean isAllowed = allowedRoutes
                 .stream()

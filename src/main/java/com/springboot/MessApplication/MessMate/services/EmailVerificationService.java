@@ -27,8 +27,8 @@ public class EmailVerificationService {
     private final UserRepository userRepository;
     private final EmailService emailService;
 
-    @Value("${app.frontend-url:http://localhost:3000}")
-    private String frontendUrl;
+    @Value("${app.backend-url:http://localhost:8080}")
+    private String backendUrl;
 
     @Transactional
     public void createTokenAndSendVerificationLink(User user) {
@@ -42,7 +42,7 @@ public class EmailVerificationService {
                 .build();
         tokenRepository.save(token);
 
-        String verificationLink = frontendUrl + "/verify-email?token=" + rawToken;
+        String verificationLink = backendUrl + "/auth/verify-email?token=" + rawToken;
         emailService.sendHtmlMail(
                 user.getEmail(),
                 "Verify your MessMate email",

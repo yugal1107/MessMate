@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -40,9 +41,18 @@ public class AuthController {
     }
 
     @GetMapping("/verify-email")
-    public ResponseEntity<SuccessResponseDto> verifyEmail(@RequestParam String token) {
+    public ResponseEntity<String> verifyEmail(@RequestParam String token) {
         emailVerificationService.verifyEmail(token);
-        return ResponseEntity.ok(new SuccessResponseDto("Email verified successfully"));
+        return ResponseEntity.ok()
+                .contentType(MediaType.TEXT_HTML)
+                .body("""
+                        <!DOCTYPE html>
+                        <html><head><title>MessMate email verified</title></head>
+                        <body style="font-family:Arial,sans-serif;text-align:center;padding:48px;">
+                            <h1>Email verified successfully</h1>
+                            <p>You can return to the MessMate app and log in.</p>
+                        </body></html>
+                        """);
     }
 
     @PostMapping("/login")

@@ -56,7 +56,10 @@ class AuthControllerTest {
         mockMvc.perform(get("/auth/verify-email")
                         .param("token", "verification-token"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.message").value("Email verified successfully"));
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+                        .contentTypeCompatibleWith(MediaType.TEXT_HTML))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+                        .string(org.hamcrest.Matchers.containsString("Email verified successfully")));
 
         verify(emailVerificationService).verifyEmail("verification-token");
     }

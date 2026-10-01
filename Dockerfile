@@ -25,14 +25,12 @@ LABEL description="Smart Mess Subscription and Meal Management System"
 
 WORKDIR /app
 
-# Copy only the application artifact; secrets are supplied at runtime.
-COPY --from=build /app/target/MessMate-0.0.1-SNAPSHOT.jar /app/app.jar
+# Run as a non-root user. BusyBox wget (used by the healthcheck) ships with Alpine.
+RUN addgroup -S spring && adduser -S spring -G spring
 
-# Install healthcheck tooling and run as a non-root user.
-RUN apk add --no-cache wget \
-    && addgroup -S spring \
-    && adduser -S spring -G spring \
-    && chown -R spring:spring /app
+# Copy only the application artifact; secrets are supplied at runtime.
+# --chown sets ownership in the same layer, avoiding a duplicate JAR layer from chown -R.
+COPY --from=build --chown=spring:spring /app/target/MessMate-0.0.1-SNAPSHOT.jar /app/app.jar
 
 USER spring:spring
 

@@ -18,6 +18,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -35,6 +36,7 @@ public class MealOffService {
     private final UserService userService;
 
     public TodayMealOffDto setLunchOff() {
+        validateWeekdayOperation();
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         subscriptionService.checkSubscriptionStatus(user.getId());
         MealOff mealOff = getMealOff(user.getId());
@@ -53,6 +55,7 @@ public class MealOffService {
         }
     }
     public TodayMealOffDto cancelLunchOff() {
+        validateWeekdayOperation();
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         subscriptionService.checkSubscriptionStatus(user.getId());
         MealOff mealOff = getMealOff(user.getId());
@@ -70,6 +73,7 @@ public class MealOffService {
     }
 
     public TodayMealOffDto setDinnerOff() {
+        validateWeekdayOperation();
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         subscriptionService.checkSubscriptionStatus(user.getId());
         MealOff mealOff = getMealOff(user.getId());
@@ -89,6 +93,7 @@ public class MealOffService {
     }
 
     public TodayMealOffDto cancelDinnerOff() {
+        validateWeekdayOperation();
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         subscriptionService.checkSubscriptionStatus(user.getId());
         MealOff mealOff = getMealOff(user.getId());
@@ -124,6 +129,18 @@ public class MealOffService {
 
         if(mealOffDto.getStartDate().isEqual(mealOffDto.getEndDate()) && mealOffDto.getStartMeal()==Meal.DINNER && mealOffDto.getEndMeal()==Meal.LUNCH) {
             throw new InvalidCustomOffRequestException("Start meal cannot be after end meal for one day off");
+        }
+
+        if (!containsWeekday(mealOffDto.getStartDate(), mealOffDto.getEndDate())) {
+            throw new InvalidCustomOffRequestException(
+                    "Custom meal-offs must include at least one working day (Monday-Friday)");
+        }
+
+        if (mealOffDto.getStartDate().getDayOfWeek() == DayOfWeek.SUNDAY) {
+            mealOffDto.setStartMeal(Meal.LUNCH);
+        }
+        if (mealOffDto.getEndDate().getDayOfWeek() == DayOfWeek.SUNDAY) {
+            mealOffDto.setEndMeal(Meal.DINNER);
         }
 
         boolean isFutureDate = mealOffDto.getStartDate().isAfter(LocalDate.now());
@@ -318,6 +335,24 @@ public class MealOffService {
         mealOffRepository.save(mealOff);
     }
 
+    private void validateWeekdayOperation() {
+        DayOfWeek today = LocalDate.now().getDayOfWeek();
+        if (today == DayOfWeek.SATURDAY || today == DayOfWeek.SUNDAY) {
+            throw new InvalidMealOffStateException("Daily meal-offs cannot be applied on weekends");
+        }
+    }
+
+    private boolean containsWeekday(LocalDate startDate, LocalDate endDate) {
+        LocalDate current = startDate;
+        while (!current.isAfter(endDate)) {
+            DayOfWeek day = current.getDayOfWeek();
+            if (day != DayOfWeek.SATURDAY && day != DayOfWeek.SUNDAY) {
+                return true;
+            }
+            current = current.plusDays(1);
+        }
+        return false;
+    }
 
 
     public List<MealOff>  getCustomMealOffs() {

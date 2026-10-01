@@ -49,10 +49,12 @@ public class PasswordResetTokenService {
         passwordResetTokenRepository.save(token);
 
         //send email to user
-        emailService.sendMail(
+        emailService.sendHtmlMail(
                 user.getEmail(),
-                "Password reset OTP",
-                "your OTP is: " + otp
+                "Password Reset OTP - MessMate",
+                buildPasswordResetHtmlEmail(user.getName(), otp),
+                "Hi " + user.getName() + ", your MessMate password reset OTP is " + otp
+                        + ". It is valid for 5 minutes."
         );
 
         //return token
@@ -61,6 +63,54 @@ public class PasswordResetTokenService {
 
     private String generateOtp() {
         return String.valueOf((int)(Math.random()*900000)+100000 );
+    }
+
+    private String buildPasswordResetHtmlEmail(String userName, String otp) {
+        String safeUserName = escapeHtml(userName);
+        return """
+                <!DOCTYPE html>
+                <html>
+                <body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,sans-serif;">
+                    <table width="100%%" cellpadding="0" cellspacing="0" role="presentation">
+                        <tr><td align="center" style="padding:40px 0;">
+                            <table width="560" cellpadding="0" cellspacing="0" role="presentation"
+                                   style="background:#ffffff;border-radius:8px;">
+                                <tr><td style="padding:32px 40px;border-bottom:1px solid #e5e5e5;">
+                                    <h1 style="margin:0;color:#1a1a1a;font-size:24px;">MessMate</h1>
+                                </td></tr>
+                                <tr><td style="padding:40px;">
+                                    <h2 style="margin:0 0 24px;color:#1a1a1a;">Reset your password</h2>
+                                    <p style="color:#4a4a4a;line-height:1.6;">Hi %s,</p>
+                                    <p style="color:#4a4a4a;line-height:1.6;">
+                                        Use the OTP below to reset your MessMate password.
+                                    </p>
+                                    <p style="margin:28px 0;text-align:center;color:#1a1a1a;
+                                              font-size:30px;font-weight:bold;letter-spacing:8px;">%s</p>
+                                    <p style="color:#ad6800;background:#fffbe6;border:1px solid #ffe58f;
+                                              padding:14px;border-radius:4px;">
+                                        <strong>Valid for 5 minutes.</strong> Do not share this OTP.
+                                    </p>
+                                </td></tr>
+                                <tr><td style="padding:24px 40px;background:#fafafa;color:#888;font-size:12px;">
+                                    If you did not request this, you can safely ignore this email.
+                                </td></tr>
+                            </table>
+                        </td></tr>
+                    </table>
+                </body>
+                </html>
+                """.formatted(safeUserName, otp);
+    }
+
+    private String escapeHtml(String value) {
+        if (value == null) {
+            return "there";
+        }
+        return value.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
     }
 
     public void verifyOtp(String resetToken, String otp) {

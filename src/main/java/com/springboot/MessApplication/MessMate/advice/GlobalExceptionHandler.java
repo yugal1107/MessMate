@@ -4,7 +4,6 @@ import com.springboot.MessApplication.MessMate.exceptions.*;
 import io.jsonwebtoken.JwtException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.mail.MailException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -86,8 +85,8 @@ public class GlobalExceptionHandler {
         return buildErrorResponseEntity(apiError);
     }
 
-    @ExceptionHandler(MailException.class)
-    public ResponseEntity<ApiResponse<?>> handleMailException(MailException exception) {
+    @ExceptionHandler(EmailSendingException.class)
+    public ResponseEntity<ApiResponse<?>> handleEmailSendingException(EmailSendingException exception) {
         ApiError apiError = new ApiError(exception.getClass().getSimpleName(), exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         return buildErrorResponseEntity(apiError);
     }

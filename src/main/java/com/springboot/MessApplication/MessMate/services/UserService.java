@@ -26,6 +26,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -38,17 +39,20 @@ public class UserService implements UserDetailsService {
     private final ModelMapper modelMapper;
     private final PasswordEncoder passwordEncoder;
     private final NotificationService notificationService;
+    private final EmailVerificationService emailVerificationService;
 
     public UserService(
             UserRepository userRepository,
             ModelMapper modelMapper,
             PasswordEncoder passwordEncoder,
-            @Lazy NotificationService notificationService
+            @Lazy NotificationService notificationService,
+            EmailVerificationService emailVerificationService
     ) {
         this.userRepository = userRepository;
         this.modelMapper = modelMapper;
         this.passwordEncoder = passwordEncoder;
         this.notificationService = notificationService;
+        this.emailVerificationService = emailVerificationService;
     }
 
     @Override
@@ -57,6 +61,7 @@ public class UserService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 
+    @Transactional
     public UserDto signup(SignupDto signupDto) {
         Optional<User> user = userRepository.findByEmail(signupDto.getEmail());
         if(user.isPresent()){
@@ -64,6 +69,7 @@ public class UserService implements UserDetailsService {
         }
 
         User toBeCreatedUser = modelMapper.map(signupDto, User.class);
+        toBeCreatedUser.setEmailVerified(false);
         toBeCreatedUser.setRole(Role.STUDENT);
 
         Subscription subscription = Subscription.builder().status(SubscriptionStatus.INACTIVE).build();
@@ -73,7 +79,9 @@ public class UserService implements UserDetailsService {
         toBeCreatedUser.setMealOff(mealoff);
 
         toBeCreatedUser.setPassword(passwordEncoder.encode(signupDto.getPassword()));
-        return modelMapper.map(userRepository.save(toBeCreatedUser), UserDto.class);
+        User savedUser = userRepository.save(toBeCreatedUser);
+        emailVerificationService.createTokenAndSendVerificationLink(savedUser);
+        return modelMapper.map(savedUser, UserDto.class);
     }
 
     public UserListDto getAllUsersFilteredBySubscriptionStatusAndType(SubscriptionStatus status, SubscriptionType type) {

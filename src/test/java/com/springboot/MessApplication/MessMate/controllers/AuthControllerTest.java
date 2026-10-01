@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.springboot.MessApplication.MessMate.config.WebSecurityConfig;
 import com.springboot.MessApplication.MessMate.filters.JwtAuthFilter;
 import com.springboot.MessApplication.MessMate.services.AuthService;
+import com.springboot.MessApplication.MessMate.services.EmailVerificationService;
 import com.springboot.MessApplication.MessMate.services.JwtService;
 import com.springboot.MessApplication.MessMate.services.PasswordResetTokenService;
 import com.springboot.MessApplication.MessMate.services.UserService;
@@ -18,6 +19,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Map;
 
+import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -42,7 +45,21 @@ class AuthControllerTest {
     private PasswordResetTokenService passwordResetTokenService;
 
     @MockBean
+    private EmailVerificationService emailVerificationService;
+
+    @MockBean
     private JwtService jwtService;
+
+    @Test
+    @DisplayName("Should verify email through the public verification endpoint")
+    void shouldVerifyEmail() throws Exception {
+        mockMvc.perform(get("/auth/verify-email")
+                        .param("token", "verification-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.message").value("Email verified successfully"));
+
+        verify(emailVerificationService).verifyEmail("verification-token");
+    }
 
     @Test
     @DisplayName("Should reject invalid signup fields with field-level validation errors")

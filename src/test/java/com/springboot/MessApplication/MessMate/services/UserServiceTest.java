@@ -1,6 +1,7 @@
 package com.springboot.MessApplication.MessMate.services;
 
 import com.springboot.MessApplication.MessMate.dto.ChangePasswordRequestDto;
+import com.springboot.MessApplication.MessMate.dto.SignupDto;
 import com.springboot.MessApplication.MessMate.dto.SuccessResponseDto;
 import com.springboot.MessApplication.MessMate.dto.UpdateProfileDto;
 import com.springboot.MessApplication.MessMate.dto.UserDto;
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -48,6 +50,9 @@ class UserServiceTest {
     @Mock
     private NotificationService notificationService;
 
+    @Mock
+    private EmailVerificationService emailVerificationService;
+
     @InjectMocks
     private UserService userService;
 
@@ -75,6 +80,29 @@ class UserServiceTest {
         UsernamePasswordAuthenticationToken auth =
                 new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(auth);
+    }
+
+    @Test
+    @DisplayName("Should create new signup users as unverified")
+    void shouldCreateNewSignupUsersAsUnverified() {
+        SignupDto signupDto = new SignupDto();
+        signupDto.setEmail("new-user@test.com");
+        signupDto.setPassword("password123");
+        signupDto.setName("New User");
+        signupDto.setContact("9876543210");
+        signupDto.setAddress("Hostel");
+
+        when(userRepository.findByEmail(signupDto.getEmail())).thenReturn(Optional.empty());
+        when(passwordEncoder.encode(signupDto.getPassword())).thenReturn("encodedPassword");
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        UserDto result = userService.signup(signupDto);
+
+        assertNotNull(result);
+        ArgumentCaptor<User> savedUserCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(savedUserCaptor.capture());
+        verify(emailVerificationService).createTokenAndSendVerificationLink(savedUserCaptor.getValue());
+        assertFalse(savedUserCaptor.getValue().isEnabled());
     }
 
     @Test

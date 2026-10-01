@@ -30,6 +30,8 @@ public class User implements UserDetails {
     @Column(unique = true, nullable = false)
     private String email;
 
+    @Column(name = "email_verified")
+    private Boolean emailVerified;
 
     private String password;
     private String name;
@@ -58,5 +60,11 @@ public class User implements UserDetails {
     @Override
     public String getUsername() {
         return this.email;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        // Existing users with a null value remain enabled during migration.
+        return !Boolean.FALSE.equals(emailVerified);
     }
 }

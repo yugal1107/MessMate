@@ -3,6 +3,7 @@ package com.springboot.MessApplication.MessMate.controllers;
 
 import com.springboot.MessApplication.MessMate.dto.*;
 import com.springboot.MessApplication.MessMate.services.AuthService;
+import com.springboot.MessApplication.MessMate.services.EmailVerificationService;
 import com.springboot.MessApplication.MessMate.services.PasswordResetTokenService;
 import com.springboot.MessApplication.MessMate.services.UserService;
 import jakarta.servlet.http.Cookie;
@@ -11,8 +12,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -24,6 +27,7 @@ public class AuthController {
     private final AuthService authService;
     private final UserService userService;
     private final PasswordResetTokenService passwordResetTokenService;
+    private final EmailVerificationService emailVerificationService;
 
     @Value("${deploy.env}")
     private String deployEnv;
@@ -33,6 +37,12 @@ public class AuthController {
     public ResponseEntity<UserDto> signup(@Valid @RequestBody SignupDto signupDto) {
         UserDto userDto = userService.signup(signupDto);
         return ResponseEntity.ok(userDto);
+    }
+
+    @GetMapping("/verify-email")
+    public ResponseEntity<SuccessResponseDto> verifyEmail(@RequestParam String token) {
+        emailVerificationService.verifyEmail(token);
+        return ResponseEntity.ok(new SuccessResponseDto("Email verified successfully"));
     }
 
     @PostMapping("/login")

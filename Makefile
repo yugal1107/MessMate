@@ -82,6 +82,8 @@ docker-run:
 		--restart unless-stopped \
 		-p 8080:8080 \
 		--env-file .env \
+		-v $$(pwd)/secrets/service-account.json:/app/secrets/service-account.json:ro \
+		-e GOOGLE_APPLICATION_CREDENTIALS=/app/secrets/service-account.json \
 		-e SPRING_PROFILES_ACTIVE=prod \
 		$(IMAGE_NAME):$(TAG)
 

@@ -46,3 +46,10 @@ src/test/
 
 .env
 .env.local
+
+# Secrets and credentials
+
+src/main/resources/firebase/
+secrets/
+*.pem
+*.key

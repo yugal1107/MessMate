@@ -39,12 +39,12 @@ help:
 # Run in production mode
 run:
 	$(require_java21)
-	@export $$(grep -v '^#' .env | xargs) && JAVA_HOME=$(JAVA21_HOME) ./mvnw spring-boot:run -Dspring-boot.run.profiles=prod
+	@set -a; . ./.env && set +a && JAVA_HOME=$(JAVA21_HOME) ./mvnw spring-boot:run -Dspring-boot.run.profiles=prod
 
 # Run in development mode
 dev:
 	$(require_java21)
-	@export $$(grep -v '^#' .env | xargs) && JAVA_HOME=$(JAVA21_HOME) ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+	@set -a; . ./.env && set +a && JAVA_HOME=$(JAVA21_HOME) ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 
 # Build the project
 build:
@@ -54,7 +54,7 @@ build:
 # Run the built JAR file directly
 start:
 	$(require_java21)
-	@export $$(grep -v '^#' .env | xargs) && $(JAVA21_HOME)/bin/java -jar target/MessMate-0.0.1-SNAPSHOT.jar
+	@set -a; . ./.env && set +a && $(JAVA21_HOME)/bin/java -jar target/MessMate-0.0.1-SNAPSHOT.jar
 
 # Clean the project
 clean:
@@ -77,13 +77,14 @@ docker-stop:
 
 # Run Docker container in production mode with environment variables
 docker-run:
+	@set -a; . ./.env && set +a && \
 	docker run -d \
 		--name messmate-backend \
 		--restart unless-stopped \
 		-p 8080:8080 \
 		--env-file .env \
-		-v $$(pwd)/secrets/service-account.json:/app/secrets/service-account.json:ro \
-		-e GOOGLE_APPLICATION_CREDENTIALS=/app/secrets/service-account.json \
+		-e DB_PROD_URL="$$DB_PROD_URL" \
+		-e EMAIL_FROM="$$EMAIL_FROM" \
 		-e SPRING_PROFILES_ACTIVE=prod \
 		$(IMAGE_NAME):$(TAG)
 

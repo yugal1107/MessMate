@@ -38,8 +38,8 @@ USER spring:spring
 
 EXPOSE 8080
 
-# Leave room for the JVM, native memory, and container tooling.
-ENV JAVA_OPTS="-XX:InitialRAMPercentage=25 -XX:MaxRAMPercentage=75"
+# Keep enough memory available for the VPS OS, Docker, and Cloudflare Tunnel.
+ENV JAVA_OPTS="-Xms128m -Xmx350m -XX:+UseSerialGC"
 
 # The project does not currently include Spring Boot Actuator, so use the
 # existing public OpenAPI endpoint as the container health check.

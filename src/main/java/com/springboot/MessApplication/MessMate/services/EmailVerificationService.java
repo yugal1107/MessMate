@@ -22,6 +22,7 @@ import java.util.UUID;
 public class EmailVerificationService {
 
     private static final int TOKEN_EXPIRY_HOURS = 24;
+    private static final int RESEND_COOLDOWN_SECONDS = 60;
 
     private final EmailVerificationTokenRepository tokenRepository;
     private final UserRepository userRepository;
@@ -38,6 +39,7 @@ public class EmailVerificationService {
         EmailVerificationToken token = EmailVerificationToken.builder()
                 .tokenHash(hashToken(rawToken))
                 .expiresAt(LocalDateTime.now().plusHours(TOKEN_EXPIRY_HOURS))
+                .createdAt(LocalDateTime.now())
                 .user(user)
                 .build();
         tokenRepository.save(token);
@@ -49,6 +51,22 @@ public class EmailVerificationService {
                 buildVerificationEmail(user.getName(), verificationLink),
                 "Verify your MessMate email by opening this link: " + verificationLink
         );
+    }
+
+    @Transactional
+    public void resendVerificationEmail(String email) {
+        userRepository.findByEmail(email)
+                .filter(user -> !user.isEnabled())
+                .ifPresent(user -> {
+                    EmailVerificationToken existingToken = tokenRepository.findByUser(user).orElse(null);
+                    LocalDateTime now = LocalDateTime.now();
+                    if (existingToken != null
+                            && existingToken.getCreatedAt() != null
+                            && existingToken.getCreatedAt().plusSeconds(RESEND_COOLDOWN_SECONDS).isAfter(now)) {
+                        return;
+                    }
+                    createTokenAndSendVerificationLink(user);
+                });
     }
 
     @Transactional

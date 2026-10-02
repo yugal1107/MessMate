@@ -40,6 +40,16 @@ public class AuthController {
         return ResponseEntity.ok(userDto);
     }
 
+    @PostMapping("/resend-verification")
+    public ResponseEntity<SuccessResponseDto> resendVerification(
+            @Valid @RequestBody ResendVerificationRequestDto request
+    ) {
+        emailVerificationService.resendVerificationEmail(request.getEmail());
+        return ResponseEntity.ok(new SuccessResponseDto(
+                "If an unverified account exists, a verification email has been sent"
+        ));
+    }
+
     @GetMapping("/verify-email")
     public ResponseEntity<String> verifyEmail(@RequestParam String token) {
         emailVerificationService.verifyEmail(token);

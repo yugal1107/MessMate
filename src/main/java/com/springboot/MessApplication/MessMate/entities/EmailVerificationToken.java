@@ -34,6 +34,8 @@ public class EmailVerificationToken {
     @Column(nullable = false)
     private LocalDateTime expiresAt;
 
+    private LocalDateTime createdAt;
+
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(nullable = false, unique = true)
     private User user;

@@ -20,6 +20,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -36,6 +37,60 @@ class EmailVerificationServiceTest {
 
     @InjectMocks
     private EmailVerificationService emailVerificationService;
+
+    @Test
+    @DisplayName("Should resend a verification link for an unverified user")
+    void shouldResendVerificationLinkForUnverifiedUser() {
+        User user = User.builder()
+                .email("user@test.com")
+                .name("User")
+                .emailVerified(false)
+                .build();
+
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+        when(tokenRepository.findByUser(user)).thenReturn(Optional.empty());
+
+        emailVerificationService.resendVerificationEmail(user.getEmail());
+
+        verify(tokenRepository).save(any(EmailVerificationToken.class));
+        verify(emailService).sendHtmlMail(
+                org.mockito.ArgumentMatchers.eq(user.getEmail()),
+                org.mockito.ArgumentMatchers.anyString(),
+                org.mockito.ArgumentMatchers.anyString(),
+                org.mockito.ArgumentMatchers.anyString()
+        );
+    }
+
+    @Test
+    @DisplayName("Should not reveal whether an email can be sent")
+    void shouldNotSendForUnknownEmail() {
+        when(userRepository.findByEmail("unknown@test.com")).thenReturn(Optional.empty());
+
+        emailVerificationService.resendVerificationEmail("unknown@test.com");
+
+        verifyNoInteractions(tokenRepository, emailService);
+    }
+
+    @Test
+    @DisplayName("Should enforce the resend cooldown")
+    void shouldEnforceResendCooldown() {
+        User user = User.builder()
+                .email("user@test.com")
+                .emailVerified(false)
+                .build();
+        EmailVerificationToken existingToken = EmailVerificationToken.builder()
+                .user(user)
+                .createdAt(LocalDateTime.now().minusSeconds(30))
+                .build();
+
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+        when(tokenRepository.findByUser(user)).thenReturn(Optional.of(existingToken));
+
+        emailVerificationService.resendVerificationEmail(user.getEmail());
+
+        verify(tokenRepository).findByUser(user);
+        verifyNoInteractions(emailService);
+    }
 
     @Test
     @DisplayName("Should verify an unexpired link and activate the user")

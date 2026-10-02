@@ -51,6 +51,19 @@ class AuthControllerTest {
     private JwtService jwtService;
 
     @Test
+    @DisplayName("Should resend verification email through the public endpoint")
+    void shouldResendVerificationEmail() throws Exception {
+        mockMvc.perform(post("/auth/resend-verification")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"user@test.com\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.message").value(
+                        "If an unverified account exists, a verification email has been sent"));
+
+        verify(emailVerificationService).resendVerificationEmail("user@test.com");
+    }
+
+    @Test
     @DisplayName("Should verify email through the public verification endpoint")
     void shouldVerifyEmail() throws Exception {
         mockMvc.perform(get("/auth/verify-email")
